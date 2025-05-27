@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.microservicios.contenido_educativo.model.ContenidoEducativo;
+import com.microservicios.contenido_educativo.model.CursoDTO;
 import com.microservicios.contenido_educativo.model.TipoUsuario;
 import com.microservicios.contenido_educativo.model.UsuarioDTO;
 import com.microservicios.contenido_educativo.repository.ContenidoEducativoRepository;
@@ -34,8 +35,9 @@ public class ContenidoEducativoService {
 
     public ContenidoEducativo crearContenido(ContenidoEducativo nuevoContenido) {
         String url_usuarios = "http://localhost:8081/api/usuarios/" + nuevoContenido.getIdUsuario();
-        String url_cursos = "http://localhost:8084/api/cursos/" + nuevoContenido.getIdCurso();
+        String url_cursos = "http://localhost:8083/api/cursos/" + nuevoContenido.getIdCurso();
         UsuarioDTO usuario = restTemplate.getForObject(url_usuarios, UsuarioDTO.class);
+        CursoDTO curso = restTemplate.getForObject(url_cursos, CursoDTO.class);
         if (contenidoEducativoRepository.existsById(nuevoContenido.getContId())) {
             throw new IllegalArgumentException("Ya existe contenido con ID: " + nuevoContenido.getContId());    
         }
@@ -44,6 +46,9 @@ public class ContenidoEducativoService {
         }
         if (usuario.getTipoUsuario() != TipoUsuario.PROFESOR) {
             throw new IllegalArgumentException("Solo los profesores pueden subir contenido.");
+        }
+        if (curso == null) {
+            throw new EntityNotFoundException("Curso no encontrado con id " + nuevoContenido.getIdUsuario());
         }
         nuevoContenido.setFechaPublicacion(LocalDate.now());
         return contenidoEducativoRepository.save(nuevoContenido);
