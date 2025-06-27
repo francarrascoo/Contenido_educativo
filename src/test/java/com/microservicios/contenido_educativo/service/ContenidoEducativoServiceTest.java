@@ -221,7 +221,6 @@ public class ContenidoEducativoServiceTest {
             .hasMessageContaining("Error al consultar el curso");
     }
 
-   
     // ----- Tests para actualizar contenido -----
 
     @Test
@@ -358,8 +357,6 @@ public class ContenidoEducativoServiceTest {
             .hasMessageContaining("Contenido no encontrado con ID: 999");
         verify(contenidoEducativoRepository, never()).save(any());
     }
-
-
 
     // ----- Tests para eliminar contenido -----
 
