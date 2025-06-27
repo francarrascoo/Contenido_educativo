@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.microservicios.contenido_educativo.model.ContenidoEducativo;
 
 @Repository
-public interface ContenidoEducativoRepository extends JpaRepository<ContenidoEducativo, Integer> {
+public interface ContenidoEducativoRepository extends JpaRepository<ContenidoEducativo, Long> {
     
 }

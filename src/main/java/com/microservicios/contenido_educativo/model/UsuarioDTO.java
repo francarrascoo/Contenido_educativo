@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class UsuarioDTO {
-    private int idUsuario;
+    private Long idUsuario;
     private String nombreUsuario;
     private String apellidoPUsuario;
     private String apellidoMUsuario;

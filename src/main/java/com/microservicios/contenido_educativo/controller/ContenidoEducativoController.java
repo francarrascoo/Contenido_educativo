@@ -19,14 +19,14 @@ import com.microservicios.contenido_educativo.model.ContenidoEducativo;
 import com.microservicios.contenido_educativo.service.ContenidoEducativoService;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping ("api/contenido-educativo")
 
 public class ContenidoEducativoController {
     
-    @Autowired
-    private ContenidoEducativoService contenidoEducativoService;
+    @Autowired ContenidoEducativoService contenidoEducativoService;
 
     @GetMapping
     public ResponseEntity<?> getContenidoEducativo() {
@@ -43,7 +43,7 @@ public class ContenidoEducativoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getContenidoId(@PathVariable int id) {
+    public ResponseEntity<?> getContenidoId(@PathVariable Long id) {
         try {
             Optional<ContenidoEducativo> contenido = contenidoEducativoService.buscarContenidoPorId(id);
             if (contenido.isPresent()) {
@@ -57,7 +57,7 @@ public class ContenidoEducativoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearContenido(@RequestBody ContenidoEducativo nuevoContenido) {
+    public ResponseEntity<?> crearContenido(@Valid @RequestBody ContenidoEducativo nuevoContenido) {
         try {
             ContenidoEducativo contenidoCreado = contenidoEducativoService.crearContenido(nuevoContenido);
             return new ResponseEntity<>(contenidoCreado, HttpStatus.OK);
@@ -69,7 +69,7 @@ public class ContenidoEducativoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarContenido(@PathVariable int id, @RequestBody ContenidoEducativo contenido) {
+    public ResponseEntity<?> actualizarContenido(@PathVariable Long id, @Valid @RequestBody ContenidoEducativo contenido) {
         try {
             contenido.setContId(id);
             ContenidoEducativo contenidoActualizado = contenidoEducativoService.actualizarContenido(contenido);
@@ -79,12 +79,12 @@ public class ContenidoEducativoController {
         } catch (IllegalArgumentException ex) {
             return new ResponseEntity<>("Error: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (RuntimeException ex) {
-            return new ResponseEntity<>("Error interno: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarContenido(@PathVariable int id) {
+    public ResponseEntity<?> eliminarContenido(@PathVariable Long id) {
         try {
             contenidoEducativoService.eliminarContenido(id);
             return new ResponseEntity<>("Contenido eliminado correctamente", HttpStatus.OK);
@@ -92,4 +92,5 @@ public class ContenidoEducativoController {
             return new ResponseEntity<>("Error al eliminar el contenido: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }
