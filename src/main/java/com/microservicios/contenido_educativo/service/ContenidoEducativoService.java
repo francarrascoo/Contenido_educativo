@@ -20,7 +20,7 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ContenidoEducativoService {
-    
+
     @Autowired
     private ContenidoEducativoRepository contenidoEducativoRepository;
 
@@ -48,7 +48,8 @@ public class ContenidoEducativoService {
 
     public ContenidoEducativo actualizarContenido(ContenidoEducativo contenido) {
         ContenidoEducativo existente = contenidoEducativoRepository.findById(contenido.getContId())
-            .orElseThrow(() -> new EntityNotFoundException("Contenido no encontrado con ID: " + contenido.getContId()));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Contenido no encontrado con ID: " + contenido.getContId()));
         validarUsuario(contenido.getIdUsuario());
         validarCursoExistente(contenido.getIdCurso());
         existente.setDescripcion(contenido.getDescripcion());
@@ -61,20 +62,20 @@ public class ContenidoEducativoService {
             existente.setUrl(urlGenerada);
         }
         existente.setFechaPublicacion(LocalDate.now());
-        return contenidoEducativoRepository.save(existente);     
+        return contenidoEducativoRepository.save(existente);
     }
 
-    public void eliminarContenido(Long id) {
-        if (!contenidoEducativoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Contenido no encontrado con ID: " + id);
-        }
+    public ContenidoEducativo eliminarContenido(Long id) {
+        ContenidoEducativo contenido = contenidoEducativoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contenido no encontrado con ID: " + id));
         contenidoEducativoRepository.deleteById(id);
+        return contenido;
     }
 
     private void validarUsuario(int idUsuario) {
         String url = "http://localhost:8081/api/usuarios/" + idUsuario;
         UsuarioDTO usuario = restTemplate.getForObject(url, UsuarioDTO.class);
-        if (usuario == null ) {
+        if (usuario == null) {
             throw new EntityNotFoundException("Usuario no encontrado con ID: " + idUsuario);
         }
         if (usuario.getTipoUsuario() != TipoUsuario.PROFESOR) {
@@ -85,7 +86,7 @@ public class ContenidoEducativoService {
         }
     }
 
-    private void validarCursoExistente(int idCurso){
+    private void validarCursoExistente(int idCurso) {
         String url = "http://localhost:8083/api/cursos/" + idCurso;
         try {
             CursoDTO curso = restTemplate.getForObject(url, CursoDTO.class);
@@ -114,7 +115,8 @@ public class ContenidoEducativoService {
     }
 
     private String generarUrlAutomaticaParaContenido(ContenidoEducativo contenido) {
-        return "https://miservidor.com/contenido/" + contenido.getContId() + "/tipo/" + contenido.getTipo().name().toLowerCase();
+        return "https://miservidor.com/contenido/" + contenido.getContId() + "/tipo/"
+                + contenido.getTipo().name().toLowerCase();
     }
 
 }

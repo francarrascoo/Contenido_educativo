@@ -4,20 +4,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.microservicios.contenido_educativo.assemblers.ContenidoEducativoModelAssembler;
 import com.microservicios.contenido_educativo.model.ContenidoEducativo;
 import com.microservicios.contenido_educativo.service.ContenidoEducativoService;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -34,47 +31,50 @@ public class ContenidoEducativoController {
     private ContenidoEducativoModelAssembler contenidoEducativoModelAssembler;
 
     @GetMapping
-    public ResponseEntity<?> getContenidoEducativo() {
+    public ResponseEntity<CollectionModel<EntityModel<ContenidoEducativo>>> getContenidoEducativo() {
         try {
             List<ContenidoEducativo> contenidos = contenidoEducativoService.listarContenidos();
-            if (!contenidos.isEmpty()) {
-                var modelos = contenidos.stream()
-                        .map(contenidoEducativoModelAssembler::toModel)
-                        .toList();
-                return new ResponseEntity<>(modelos, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("No hay contenido registrado", HttpStatus.NO_CONTENT);
+            if (contenidos.isEmpty()) {
+                return ResponseEntity.noContent().build();
             }
+            List<EntityModel<ContenidoEducativo>> modelos = contenidos.stream()
+                    .map(contenidoEducativoModelAssembler::toModel)
+                    .toList();
+            CollectionModel<EntityModel<ContenidoEducativo>> coleccion = CollectionModel.of(
+                    modelos,
+                    linkTo(methodOn(ContenidoEducativoController.class).getContenidoEducativo()).withSelfRel());
+            return ResponseEntity.ok(coleccion);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error al obtener contenido: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getContenidoId(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<ContenidoEducativo>> getContenidoId(@PathVariable Long id) {
         try {
             Optional<ContenidoEducativo> contenido = contenidoEducativoService.buscarContenidoPorId(id);
             if (contenido.isPresent()) {
-                return new ResponseEntity<>(contenidoEducativoModelAssembler.toModel(contenido.get()), HttpStatus.OK);
+                EntityModel<ContenidoEducativo> model = contenidoEducativoModelAssembler.toModel(contenido.get());
+                return ResponseEntity.ok(model);
             } else {
-                return new ResponseEntity<>("Contenido no encontrado con ID: " + id, HttpStatus.NOT_FOUND);
+                return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Error al buscar contenido: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> crearContenido(@Valid @RequestBody ContenidoEducativo nuevoContenido) {
+    public ResponseEntity<EntityModel<ContenidoEducativo>> crearContenido(
+            @Valid @RequestBody ContenidoEducativo contenido) {
         try {
-            ContenidoEducativo contenidoCreado = contenidoEducativoService.crearContenido(nuevoContenido);
-            return new ResponseEntity<>(contenidoCreado, HttpStatus.OK);
+            ContenidoEducativo creado = contenidoEducativoService.crearContenido(contenido);
+            EntityModel<ContenidoEducativo> model = contenidoEducativoModelAssembler.toModel(creado);
+            return new ResponseEntity<>(model, HttpStatus.CREATED);
         } catch (EntityNotFoundException | IllegalArgumentException ex) {
-            return new ResponseEntity<>("Error: " + ex.getMessage(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (RuntimeException ex) {
-            return new ResponseEntity<>("Error: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -95,13 +95,15 @@ public class ContenidoEducativoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarContenido(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<ContenidoEducativo>> eliminarContenido(@PathVariable Long id) {
         try {
-            contenidoEducativoService.eliminarContenido(id);
-            return new ResponseEntity<>("Contenido eliminado correctamente", HttpStatus.OK);
+            ContenidoEducativo eliminado = contenidoEducativoService.eliminarContenido(id);
+            EntityModel<ContenidoEducativo> model = contenidoEducativoModelAssembler.toModel(eliminado);
+            return ResponseEntity.ok(model);
         } catch (EntityNotFoundException ex) {
-            return new ResponseEntity<>("Error al eliminar el contenido: " + ex.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.notFound().build();
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
